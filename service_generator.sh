@@ -1,0 +1,41 @@
+#!/bin/bash
+
+SERVICE_NAME="reflector" 
+BINARY_NAME="reflector"     
+WORKING_DIR=$(pwd)       
+USER=$(whoami)       
+
+# Compile the program
+go build -o $BINARY_NAME main.go
+
+# Generate the systemd service file
+SERVICE_FILE_CONTENT="[Unit]
+Description=$SERVICE_NAME Service
+After=network.target
+
+[Service]
+ExecStart=$WORKING_DIR/$BINARY_NAME
+WorkingDirectory=$WORKING_DIR
+Restart=always
+RestartSec=3
+User=$USER
+Group=$USER
+
+[Install]
+WantedBy=multi-user.target
+"
+
+echo "Creating service file for $SERVICE_NAME at /etc/systemd/system/$SERVICE_NAME.service"
+echo "$SERVICE_FILE_CONTENT" | sudo tee /etc/systemd/system/$SERVICE_NAME.service > /dev/null
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable $SERVICE_NAME.service
+
+sudo systemctl start $SERVICE_NAME.service
+
+echo "Service status:"
+sudo systemctl status $SERVICE_NAME.service
+
+# Output message
+echo "Service $SERVICE_NAME created, started, and enabled at boot successfully."
